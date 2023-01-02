@@ -1,24 +1,26 @@
-// Для запуска файла использовать команду ts-node src/index.ts находясь в папке homeworks/2
-import { EventEmitter } from './emitter';
+import {EventEmitter} from './emitter';
+import {AddActionData, Person, Persons} from "./types";
+import {ActionType} from "./enums/actionType";
 
 class Bank extends EventEmitter {
-    persons: any = {};
+    persons: Persons = {};
 
     constructor() {
         super();
-        this.on('add', (data: any) => this.add(data));
+        this.on(ActionType.Add, (data: AddActionData) => this.add(data));
+        this.on(ActionType.Withdraw, (data: AddActionData) => this.withdraw(data))
     }
 
-    register (person: any) {
+    register (person: Person) {
         const id = Date.now();
 
         this.persons[id] = { ...person };
-        this.emit('register', person);
+        this.emit(ActionType.Register, person);
 
         return id;
     }
 
-    add (data: any) {
+    private add (data: AddActionData) {
         const { personId, amount } = data;
         const person = this.persons[personId];
 
@@ -28,7 +30,23 @@ class Bank extends EventEmitter {
 
         person.balance = person.balance + amount;
 
-        this.emit('changeBalance', { name: person.name, amount: person.balance});
+        this.emit(ActionType.ChangeBalance, { name: person.name, amount: person.balance} as Person);
+    }
+    private withdraw(data:AddActionData) {
+        const {personId, amount} = data;
+        const person = this.persons[personId];
+
+        if (!person) {
+            throw new Error(`Пользователь с идентификатором ${personId} не найден`);
+        }
+        if (person.balance <= amount) {
+            person.balance = 0;
+            console.log('!!! Ваша карта має нульовий баланс !!!')
+        } else {
+            person.balance = person.balance - amount;
+        }
+
+        this.emit(ActionType.ChangeBalance, { name: person.name, amount: person.balance} as Person);
     }
 }
 
@@ -39,7 +57,7 @@ const personId = bank.register({
     balance: 100
 });
 
-bank.emit('add', { personId, amount: 20 });
+bank.emit(ActionType.Add, { personId, amount: 20 } as AddActionData);
 
 // Задание со звёздочкой
-bank.emit('withdraw', { personId, amount: 20 });
+bank.emit(ActionType.Withdraw, { personId, amount: 20 } as AddActionData);

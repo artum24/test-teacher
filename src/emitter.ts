@@ -1,17 +1,20 @@
+import {ActionEmitData, AddActionData, Handler} from "./types";
+import {ActionType} from "./enums/actionType";
+
 export class EventEmitter {
     events = Object.create(null);
 
     constructor() {
         this
-            .on('register', (person: any) => {
-            console.log(`Пользователь ${person.name} был успешно зарегистрирован`);
+            .on(ActionType.Register, (person) => {
+                console.log(`Пользователь ${person.name} был успешно зарегистрирован з балансом - ${person.balance}$`);
             })
-            .on('changeBalance', ({ name, amount }: any) => {
+            .on(ActionType.ChangeBalance, ({ name, amount }) => {
                 console.log(`На счету ${name} — ${amount}$`);
             });
     }
 
-    on (type: any, handler: any) {
+    on (type: ActionType, handler: Handler<AddActionData>) {
         if (type in this.events) {
             this.events[type].push(handler);
         } else {
@@ -21,7 +24,8 @@ export class EventEmitter {
         return this;
     }
 
-    emit(type: any, data: any) {
+    emit(type: ActionType, data: ActionEmitData) {
+
         const handlers = this.events[type];
 
         if (Array.isArray(handlers)) {
